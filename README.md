@@ -3,7 +3,7 @@ A sample database with an integrated test suite, used to test your applications 
 
 This repository was migrated from [Launchpad](https://launchpad.net/test-db).
 
-Originally written for MySQL, it has been ported to psql for testing in PostgreSQL.
+Originally written for MySQL, it has been ported to psql for testing in PostgreSQL.  Tested with PostgreSQL 9.3, but should work with all 9.x.
 
 
 ## Where it comes from
@@ -26,27 +26,25 @@ untouched, and use these issues as data cleaning exercises.
 
 ## Installation:
 
-To install the database, download the repository and change directory to the repository
+To install the database, download the repository and change directory to the repository.
 
-* Tested with PostgreSQL 9.3, but should work with all 9.x
-
- 	$ sudo su postgres
- 	$ psql < employees.sql
+    $ sudo su postgres
+    $ psql < employees.sql
 
 The database and all related objects will be owned by the postgres user.  If you need to change ownership of the database and all tables use the following commands, replacing 'newowner' with the username to change ownership to:
 
- 	$ sudo su postgres
- 	$ psql -d employees
- 	employees=# DO $$DECLARE r record;
-    	          BEGIN
-        	          FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
-            	      LOOP
-                	      EXECUTE 'ALTER TABLE '|| r.tablename ||' OWNER TO newowner;';
-                  	END LOOP;
-              	END$$;
- 	employees=# ALTER DATABASE employees OWNER TO newowner;
- 	employees=# \d
- 	employees=# \l
+    $ sudo su postgres
+    $ psql -d employees
+    employees=# DO $$DECLARE r record;
+                  BEGIN
+                      FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+                      LOOP
+                          EXECUTE 'ALTER TABLE '|| r.tablename ||' OWNER TO newowner;';
+                    END LOOP;
+                END$$;
+    employees=# ALTER DATABASE employees OWNER TO newowner;
+    employees=# \d
+    employees=# \l
 
 
 
