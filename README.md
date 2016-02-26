@@ -3,7 +3,7 @@ A sample database with an integrated test suite, used to test your applications 
 
 This repository was migrated from [Launchpad](https://launchpad.net/test-db).
 
-See usage in the [MySQL docs](https://dev.mysql.com/doc/employee/en/index.html)
+Originally written for MySQL, it has been ported to psql for testing in PostgreSQL.
 
 
 ## Where it comes from
@@ -32,12 +32,11 @@ To install the database, download the repository and change directory to the rep
 
  	$ sudo su postgres
  	$ psql < employees.sql
-  
+
 The database and all related objects will be owned by the postgres user.  If you need to change ownership of the database and all tables use the following commands, replacing 'newowner' with the username to change ownership to:
 
  	$ sudo su postgres
- 	$ psql
- 	postgres=# \c employees
+ 	$ psql -d employees
  	employees=# DO $$DECLARE r record;
     	          BEGIN
         	          FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
