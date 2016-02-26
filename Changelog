@@ -1,8 +1,5 @@
-1.0.7 2015-08-30
-	- Moved to GitHub
-	- Fixed bug#393423 Duplicate key in dept_manager
-	- Fixed bug#393429 Column order in employees.dept_manager is incorrect
-	- Adapted partitioned structure to MySQL 5.5+ syntax
+1.1.0 2016-02-16
+	- ported to psql
 1.0.6 2009-03-29
 	- fixed bug#320513 - employees with same start date are counted twice
 1.0.5 2008-08-02

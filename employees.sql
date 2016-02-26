@@ -21,12 +21,19 @@
 --  it does not correspond to real people. 
 --  Any similarity to existing people is purely coincidental.
 -- 
+--  Modified 2/16/2016 by Ian Beaver for PostgreSQL
 
 DROP DATABASE IF EXISTS employees;
-CREATE DATABASE IF NOT EXISTS employees;
-USE employees;
+CREATE DATABASE employees;
+\c employees;
 
-SELECT 'CREATING DATABASE STRUCTURE' as 'INFO';
+CREATE OR REPLACE FUNCTION r(error_message text) RETURNS void AS $$
+BEGIN
+    RAISE INFO '%', error_message;
+END;
+$$ language plpgsql;
+
+SELECT r('CLEANING OLD STRUCTRE');
 
 DROP TABLE IF EXISTS dept_emp,
                      dept_manager,
@@ -35,35 +42,45 @@ DROP TABLE IF EXISTS dept_emp,
                      employees, 
                      departments;
 
-/*!50503 set default_storage_engine = InnoDB */;
-/*!50503 select CONCAT('storage engine: ', @@default_storage_engine) as INFO */;
+CREATE TYPE MF AS ENUM ('M', 'F');
+
+SELECT r('CREATING DATABASE STRUCTURE');
 
 CREATE TABLE employees (
     emp_no      INT             NOT NULL,
     birth_date  DATE            NOT NULL,
     first_name  VARCHAR(14)     NOT NULL,
     last_name   VARCHAR(16)     NOT NULL,
-    gender      ENUM ('M','F')  NOT NULL,    
+    gender      MF              NOT NULL,    
     hire_date   DATE            NOT NULL,
     PRIMARY KEY (emp_no)
 );
+
+CREATE INDEX employees_emp_no_idx ON employees (emp_no);
 
 CREATE TABLE departments (
     dept_no     CHAR(4)         NOT NULL,
     dept_name   VARCHAR(40)     NOT NULL,
     PRIMARY KEY (dept_no),
-    UNIQUE  KEY (dept_name)
+    UNIQUE (dept_name)
 );
 
+CREATE UNIQUE INDEX departments_dept_no_idx ON departments (dept_no);
+CREATE INDEX departments_dept_name_idx ON departments (dept_name);
+
 CREATE TABLE dept_manager (
-   emp_no       INT             NOT NULL,
    dept_no      CHAR(4)         NOT NULL,
+   emp_no       INT             NOT NULL,
    from_date    DATE            NOT NULL,
    to_date      DATE            NOT NULL,
    FOREIGN KEY (emp_no)  REFERENCES employees (emp_no)    ON DELETE CASCADE,
    FOREIGN KEY (dept_no) REFERENCES departments (dept_no) ON DELETE CASCADE,
    PRIMARY KEY (emp_no,dept_no)
 ); 
+
+CREATE INDEX dept_manager_emp_no_idx ON dept_manager (emp_no);
+CREATE INDEX dept_manager_dept_no_idx ON dept_manager (dept_no);
+CREATE INDEX dept_manager_emp_no_dept_no_idx ON dept_manager (emp_no,dept_no);
 
 CREATE TABLE dept_emp (
     emp_no      INT             NOT NULL,
@@ -75,15 +92,21 @@ CREATE TABLE dept_emp (
     PRIMARY KEY (emp_no,dept_no)
 );
 
+CREATE INDEX dept_emp_emp_no_idx ON dept_emp (emp_no);
+CREATE INDEX dept_emp_dept_no_idx ON dept_emp (dept_no);
+CREATE INDEX dept_emp_emp_no_dept_no_idx ON dept_emp (emp_no,dept_no);
+
 CREATE TABLE titles (
     emp_no      INT             NOT NULL,
     title       VARCHAR(50)     NOT NULL,
     from_date   DATE            NOT NULL,
     to_date     DATE,
     FOREIGN KEY (emp_no) REFERENCES employees (emp_no) ON DELETE CASCADE,
-    PRIMARY KEY (emp_no,title, from_date)
-) 
-; 
+    PRIMARY KEY (emp_no,title,from_date)
+);
+
+CREATE INDEX titles_emp_no_idx ON titles (emp_no);
+CREATE INDEX titles_emp_no_title_from_date_idx ON titles (emp_no,title,from_date);
 
 CREATE TABLE salaries (
     emp_no      INT             NOT NULL,
@@ -92,36 +115,20 @@ CREATE TABLE salaries (
     to_date     DATE            NOT NULL,
     FOREIGN KEY (emp_no) REFERENCES employees (emp_no) ON DELETE CASCADE,
     PRIMARY KEY (emp_no, from_date)
-) 
-; 
+);
 
-CREATE OR REPLACE VIEW dept_emp_latest_date AS
-    SELECT emp_no, MAX(from_date) AS from_date, MAX(to_date) AS to_date
-    FROM dept_emp
-    GROUP BY emp_no;
+CREATE INDEX salaries_emp_no_idx ON salaries (emp_no);
+CREATE INDEX salaries_emp_no_from_date_idx ON salaries (emp_no,from_date);
 
-# shows only the current department for each employee
-CREATE OR REPLACE VIEW current_dept_emp AS
-    SELECT l.emp_no, dept_no, l.from_date, l.to_date
-    FROM dept_emp d
-        INNER JOIN dept_emp_latest_date l
-        ON d.emp_no=l.emp_no AND d.from_date=l.from_date AND l.to_date = d.to_date;
-
-flush /*!50503 binary */ logs;
-
-SELECT 'LOADING departments' as 'INFO';
-source load_departments.dump ;
-SELECT 'LOADING employees' as 'INFO';
-source load_employees.dump ;
-SELECT 'LOADING dept_emp' as 'INFO';
-source load_dept_emp.dump ;
-SELECT 'LOADING dept_manager' as 'INFO';
-source load_dept_manager.dump ;
-SELECT 'LOADING titles' as 'INFO';
-source load_titles.dump ;
-SELECT 'LOADING salaries' as 'INFO';
-source load_salaries1.dump ;
-source load_salaries2.dump ;
-source load_salaries3.dump ;
-
-source show_elapsed.sql ;
+SELECT r('LOADING departments');
+\i load_departments.dump;
+SELECT r('LOADING employees');
+\i load_employees.dump;
+SELECT r('LOADING dept_emp');
+\i load_dept_emp.dump;
+SELECT r('LOADING dept_manager');
+\i load_dept_manager.dump;
+SELECT r('LOADING titles');
+\i load_titles.dump;
+SELECT r('LOADING salaries');
+\i load_salaries.dump;
